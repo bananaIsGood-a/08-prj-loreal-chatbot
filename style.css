@@ -78,6 +78,17 @@ body {
   color: var(--loreal-gray);
 }
 
+/* current question + answer (resets each turn) */
+.current-question {
+  font-weight: 700;
+  color: var(--loreal-gold);
+  margin-bottom: 8px;
+}
+
+.current-answer {
+  color: var(--loreal-black);
+}
+
 /* input row */
 .chat-form {
   display: flex;

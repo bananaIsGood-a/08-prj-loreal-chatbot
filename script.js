@@ -3,7 +3,7 @@ const chatForm = document.getElementById("chatForm");
 const userInput = document.getElementById("userInput");
 const chatWindow = document.getElementById("chatWindow");
 
-/* 🔧 TODO: replace this with your deployed Cloudflare Worker URL */
+/* 🔧 Your deployed Cloudflare Worker URL */
 const WORKER_URL = "https://loreal-chatbot.haghuwei.workers.dev/";
 
 /* The system prompt tells the AI how to behave.
@@ -23,6 +23,27 @@ const systemPrompt = {
    We start it with the system prompt — the AI will always see this first. */
 const conversationHistory = [systemPrompt];
 
+/* Shows the user's question above the AI's answer.
+   Called fresh each turn, so it always replaces (not stacks on top of) the last one. */
+function renderTurn(question, answer) {
+  // Clear out whatever was shown before
+  chatWindow.innerHTML = "";
+
+  // Build the "question" line
+  const questionEl = document.createElement("p");
+  questionEl.className = "current-question";
+  questionEl.textContent = `You asked: ${question}`;
+
+  // Build the "answer" line
+  const answerEl = document.createElement("p");
+  answerEl.className = "current-answer";
+  answerEl.textContent = answer;
+
+  // Add both to the chat window
+  chatWindow.appendChild(questionEl);
+  chatWindow.appendChild(answerEl);
+}
+
 // Set initial message
 chatWindow.textContent = "👋 Hello! How can I help you today?";
 
@@ -37,9 +58,9 @@ chatForm.addEventListener("submit", async (e) => {
   // Add the user's message to the conversation history
   conversationHistory.push({ role: "user", content: message });
 
-  // Clear the input box and let the user know we're working on it
+  // Clear the input box and show the question with a "Thinking…" placeholder
   userInput.value = "";
-  chatWindow.textContent = "Thinking…";
+  renderTurn(message, "Thinking…");
 
   try {
     // Send the whole conversation to our Cloudflare Worker,
@@ -58,12 +79,11 @@ chatForm.addEventListener("submit", async (e) => {
     // Save the AI's reply in the history too, so it remembers this turn later
     conversationHistory.push({ role: "assistant", content: reply });
 
-    // Show the reply in the chat window
-    chatWindow.textContent = reply;
+    // Show the question + reply together
+    renderTurn(message, reply);
   } catch (error) {
     // If something goes wrong (bad URL, network issue, etc.) show a friendly message
     console.error("Error talking to the chatbot:", error);
-    chatWindow.textContent =
-      "Sorry, something went wrong. Please try again in a moment.";
+    renderTurn(message, "Sorry, something went wrong. Please try again in a moment.");
   }
 });
