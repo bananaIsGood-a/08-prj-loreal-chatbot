@@ -22,33 +22,30 @@ const systemPrompt = {
 /* This array stores the whole conversation so far.
    We start it with the system prompt — the AI will always see this first. */
 const conversationHistory = [systemPrompt];
+const visibleMessages = [];
 
-/* Shows the user's question and the AI's answer as chat bubbles.
-   Called fresh each turn, so it always replaces (not stacks on top of) the last one. */
-function renderTurn(question, answer) {
-  // Clear out whatever was shown before
+/* Renders every message currently in the visible chat history. */
+function renderConversation() {
   chatWindow.innerHTML = "";
 
-  // Build the user's bubble
-  const userBubble = document.createElement("div");
-  userBubble.className = "msg user";
-  userBubble.textContent = question;
+  if (visibleMessages.length === 0) {
+    const greetingBubble = document.createElement("div");
+    greetingBubble.className = "msg ai";
+    greetingBubble.textContent = "👋 Hello! How can I help you today?";
+    chatWindow.appendChild(greetingBubble);
+    return;
+  }
 
-  // Build the AI's bubble
-  const aiBubble = document.createElement("div");
-  aiBubble.className = "msg ai";
-  aiBubble.textContent = answer;
-
-  // Add both to the chat window
-  chatWindow.appendChild(userBubble);
-  chatWindow.appendChild(aiBubble);
+  visibleMessages.forEach((message) => {
+    const bubble = document.createElement("div");
+    bubble.className = `msg ${message.role === "user" ? "user" : "ai"}`;
+    bubble.textContent = message.content;
+    chatWindow.appendChild(bubble);
+  });
 }
 
-// Show initial greeting as an AI bubble
-const greetingBubble = document.createElement("div");
-greetingBubble.className = "msg ai";
-greetingBubble.textContent = "👋 Hello! How can I help you today?";
-chatWindow.appendChild(greetingBubble);
+// Show the initial greeting
+renderConversation();
 
 /* Handle form submit */
 chatForm.addEventListener("submit", async (e) => {
@@ -63,7 +60,9 @@ chatForm.addEventListener("submit", async (e) => {
 
   // Clear the input box and show the question with a "Thinking…" placeholder
   userInput.value = "";
-  renderTurn(message, "Thinking…");
+  visibleMessages.push({ role: "user", content: message });
+  visibleMessages.push({ role: "ai", content: "Thinking…" });
+  renderConversation();
 
   try {
     // Send the whole conversation to our Cloudflare Worker,
@@ -82,11 +81,16 @@ chatForm.addEventListener("submit", async (e) => {
     // Save the AI's reply in the history too, so it remembers this turn later
     conversationHistory.push({ role: "assistant", content: reply });
 
-    // Show the question + reply together
-    renderTurn(message, reply);
+    // Replace the temporary "Thinking…" bubble with the real reply
+    visibleMessages.pop();
+    visibleMessages.push({ role: "ai", content: reply });
+    renderConversation();
   } catch (error) {
     // If something goes wrong (bad URL, network issue, etc.) show a friendly message
     console.error("Error talking to the chatbot:", error);
-    renderTurn(message, "Sorry, something went wrong. Please try again in a moment.");
+    renderTurn(
+      message,
+      "Sorry, something went wrong. Please try again in a moment.",
+    );
   }
 });
