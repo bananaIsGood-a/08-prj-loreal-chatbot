@@ -23,29 +23,32 @@ const systemPrompt = {
    We start it with the system prompt — the AI will always see this first. */
 const conversationHistory = [systemPrompt];
 
-/* Shows the user's question above the AI's answer.
+/* Shows the user's question and the AI's answer as chat bubbles.
    Called fresh each turn, so it always replaces (not stacks on top of) the last one. */
 function renderTurn(question, answer) {
   // Clear out whatever was shown before
   chatWindow.innerHTML = "";
 
-  // Build the "question" line
-  const questionEl = document.createElement("p");
-  questionEl.className = "current-question";
-  questionEl.textContent = `You asked: ${question}`;
+  // Build the user's bubble
+  const userBubble = document.createElement("div");
+  userBubble.className = "msg user";
+  userBubble.textContent = question;
 
-  // Build the "answer" line
-  const answerEl = document.createElement("p");
-  answerEl.className = "current-answer";
-  answerEl.textContent = answer;
+  // Build the AI's bubble
+  const aiBubble = document.createElement("div");
+  aiBubble.className = "msg ai";
+  aiBubble.textContent = answer;
 
   // Add both to the chat window
-  chatWindow.appendChild(questionEl);
-  chatWindow.appendChild(answerEl);
+  chatWindow.appendChild(userBubble);
+  chatWindow.appendChild(aiBubble);
 }
 
-// Set initial message
-chatWindow.textContent = "👋 Hello! How can I help you today?";
+// Show initial greeting as an AI bubble
+const greetingBubble = document.createElement("div");
+greetingBubble.className = "msg ai";
+greetingBubble.textContent = "👋 Hello! How can I help you today?";
+chatWindow.appendChild(greetingBubble);
 
 /* Handle form submit */
 chatForm.addEventListener("submit", async (e) => {
